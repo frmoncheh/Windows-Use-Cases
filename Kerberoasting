@@ -1,0 +1,9 @@
+sourcetype=wineventlog EventCode=4769  (Ticket_Encryption_Type = 0x17 AND Account_Name != "*$*") 
+|eventstats dc(Service_Name) AS DistictServices by Account_Name 
+|eventstats count(Service_Name) AS NumberOfTicketRequest by Account_Name
+|eventstats count values(Service_Name) AS RequestedKerberosServices by Account_Name,NumberOfTicketRequest,DistictServices
+|dedup Account_Name
+| where  DistictServices > 10 
+| eval _time_UTC = _time - (strptime("2000-01-01 +00:00", "%F %:z") - strptime("2000-01-01 " . strftime(_time,"%:z"), "%F %Z")) 
+| eval time_in_UTC = strftime(_time_UTC, "%F %T UTC") 
+| table time_in_UTC Account_Name,  EventCode, Ticket_Options DistictServices, NumberOfTicketRequest, Client_Address
